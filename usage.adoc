@@ -1,0 +1,127 @@
+= APIrator - APIs Mocks for Developers made easy
+APIrator <apiratordev@gmail.com>
+:reproducible:
+:listing-caption: Listing
+:source-highlighter: rouge
+:toc:
+// Uncomment next line to add a title page (or set doctype to book)
+//:title-page:
+// Uncomment next line to set page size (default is A4)
+//:pdf-page-size: Letter
+
+Created by {author}.
+
+== Introduction
+
+The APIrator project was created to help developers to create mocks for testing and development purposes.
+
+The *_de-facto_* standard to document REST APIs is Open API Specification.
+
+We follow this spec to validate the all API documentation deployed by APIrator.
+
+=== Installation
+
+The APIrator is a kubernetes operator implementation. To deploy it correctly you can find instructions to deploy with helm or kustomize.
+
+There are two flavors to achieve that, feel to free to choose your flavor.
+
+[square]
+* https://github.com/apirator/apirator-helm[helm]
+* https://github.com/apirator/apirator-kustomize[kustomize]
+
+=== How it works
+
+=== Usage
+
+We use the Custom Resource Definition to deploy the mock in the desired cluster.Our CRD is pretty simple and easy to understand
+
+Let's see a simple example:
+
+[source,yaml]
+----
+apiVersion: apirator.io/v1alpha1
+kind: APIMock
+metadata:
+  name: players-mock
+spec:
+  serviceDefinition:
+    port: 8000
+    serviceType: ClusterIP
+  watch: true
+  definition: |
+    openapi: 3.0.0
+    servers:
+      - description: APIMock Server
+        url: >-
+          https://apimock.svc.cluster.local
+    info:
+      title: Bets - Players API (4)
+      description: These APIs is part of bets solution. This APIs is responsible to players management. (4)
+      version: 0.0.1
+      contact:
+        email: apiratordev@gmail.com
+      license:
+        name: Apache 2.0
+        url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+    tags:
+      - name: players
+        description: Players management APIs
+    paths:
+      '/api/players/{player-id}':
+        get:
+          operationId: get-mesh-by-id
+          summary: Get Player Details
+          tags:
+            - players
+          parameters:
+            - name: player-id
+              in: path
+              description: Player ID
+              required: true
+              schema:
+                type: string
+          responses:
+            '200':
+              description: 200 response
+              content:
+                application/json:
+                  examples:
+                    joe:
+                      value:
+                        name: Joe Doe (1)
+                        email: joe@doe.com (1)
+            '404':
+              description: 404 response
+              content:
+                application/json:
+                  examples:
+                    error:
+                      value:
+                        code: 404
+                        message: not found
+
+----
+
+The *serviceDefinition* attribute indicates the port what the service will listen over the cluster or Load Balancer. Also, we are able to configure the Service Type options (ClusterIP, NodePort ou LoadBalancer)
+
+If you need hot-reload you need set *watch* to true, then you don't need to kill the pod to see updates instantaneously.
+
+Finally the definition attribute is the Open API Specification plain. Please pay attention at character "|", before to paste the oas content.
+
+Finally, the *definition* attribute is the Open API Specification plain. Please pay attention to the character "|", before to paste the oas content.
+
+It is enough let's create our mock using the following command:
+
+[source,sh]
+----
+kubectl apply -f <my-api.yaml> -n <desired_namespace>
+----
+
+After a few milliseconds you should be able to query using the _kubectl_ tool like this:
+
+[source,sh]
+----
+kubectl get apimock -n <desired_namespace>
+----
+
+If everything is ok, you should see the status *PROVISIONED*. Our mock is up and runing let's see the result.
